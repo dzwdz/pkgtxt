@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# install script for pkgtxt
+
+if ! whoami | grep "^root$" >/dev/null; then
+    echo "You have to be root to install pkgtxt."
+    exit 1
+fi
+
+pacman -Qeq > /etc/pkg.txt
+echo "Done!"

@@ -1,0 +1,37 @@
+#!/bin/sh
+
+if ! whoami | grep "^root$" >/dev/null; then
+    echo "You have to be root to install new packages."
+    exit 1
+fi
+
+pkgtxt=/etc/pkg.txt
+
+$EDITOR $pkgtxt
+
+pkgtxt_sorted=$(mktemp)
+sort /etc/pkg.txt > $pkgtxt_sorted
+
+to_install=$(mktemp)
+to_remove=$(mktemp)
+pacqeq=$(mktemp)
+pacman -Qeq > $pacqeq
+
+diff $pkgtxt_sorted $pacqeq
+
+diff $pkgtxt_sorted $pacqeq | grep "^< " | awk '{print $2}' > $to_install
+diff $pkgtxt_sorted $pacqeq | grep "^> " | awk '{print $2}' > $to_remove
+
+echo "Packages to install:"
+cat $to_install
+
+echo "Packages to remove:"
+cat $to_remove
+
+# installing all missing packages
+pacman -S --noconfirm $(cat $to_install) 2>/dev/null
+
+# removing all packages to remove
+pacman -Rs --noconfirm $(cat $to_remove) 2>/dev/null
+
+echo "All good!"
