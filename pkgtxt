@@ -1,5 +1,9 @@
 #!/bin/sh
 
+remove_tmps() {
+    rm $pkgtxt_sorted $to_install $to_remove $pacqeq
+}
+
 if ! whoami | grep "^root$" >/dev/null; then
     echo "You have to be root to install new packages."
     exit 1
@@ -17,10 +21,15 @@ to_remove=$(mktemp)
 pacqeq=$(mktemp)
 pacman -Qeq > $pacqeq
 
-diff $pkgtxt_sorted $pacqeq
-
 diff $pkgtxt_sorted $pacqeq | grep "^< " | awk '{print $2}' > $to_install
 diff $pkgtxt_sorted $pacqeq | grep "^> " | awk '{print $2}' > $to_remove
+
+# early exit if there's nothing to do
+if [ ! -s $to_install ] && [ ! -s $to_remove ]; then
+    echo "All good!"
+    remove_tmps
+    exit 0
+fi
 
 echo "Packages to install:"
 cat $to_install
@@ -28,10 +37,23 @@ cat $to_install
 echo "Packages to remove:"
 cat $to_remove
 
-# installing all missing packages
-pacman -S --noconfirm $(cat $to_install) 2>/dev/null
+echo "Proceed? [y/n]"
+while true; do
+    read yn
+    case $yn in
+        [Yy]* ) break ;;
+        [Nn]* ) exit ;;
+        * ) echo "Please answer y or n." ;;
+    esac
+done
+
+
+p# installing all missing packages
+pacman -S --noconfirm $(cat $to_install) 1>/dev/null 2>/dev/null
 
 # removing all packages to remove
-pacman -Rs --noconfirm $(cat $to_remove) 2>/dev/null
+pacman -Rs --noconfirm $(cat $to_remove) 1>/dev/null 2>/dev/null
+
+remove_tmps
 
 echo "All good!"
