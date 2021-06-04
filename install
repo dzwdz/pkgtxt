@@ -15,5 +15,7 @@ fi
 
 echo "Copying pkgtxt to $install_location..."
 cp pkgtxt "$install_location"
+echo "Performing initial pkgtxt sync..."
+pkgtxt sync
 
 echo "Installation finished!"
