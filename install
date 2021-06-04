@@ -7,7 +7,7 @@ if ! whoami | grep "^root$" >/dev/null; then
     exit 1
 fi
 
-if [ -z $install_location ]; then
+if [ -z $PREFIX ]; then
     install_location="/usr/local/bin"
 else
     install_location="$PREFIX"

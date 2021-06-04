@@ -11,6 +11,14 @@ fi
 
 pkgtxt=/etc/pkg.txt
 
+edit() {
+    if [ -z $EDITOR ]; then
+        echo "\$EDITOR not set."
+        exit 1
+    fi
+    $EDITOR $pkgtxt
+}
+
 update() {
     pkgtxt_sorted=$(mktemp)
     sort /etc/pkg.txt > $pkgtxt_sorted
@@ -71,7 +79,7 @@ fi
 
 case "$1" in
     update) update ;;
-    edit) $EDITOR $pkgtxt ;;
+    edit) edit ;;
     sync) pacman -Qeq > $pkgtxt ;;
     *) echo "Invalid action -- $1"
        exit 1
