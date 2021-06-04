@@ -48,7 +48,7 @@ while true; do
 done
 
 
-p# installing all missing packages
+# installing all missing packages
 pacman -S --noconfirm $(cat $to_install) 1>/dev/null 2>/dev/null
 
 # removing all packages to remove
