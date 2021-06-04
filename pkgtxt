@@ -5,55 +5,73 @@ remove_tmps() {
 }
 
 if ! whoami | grep "^root$" >/dev/null; then
-    echo "You have to be root to install new packages."
+    echo "You have to be root to run pkgtxt."
     exit 1
 fi
 
 pkgtxt=/etc/pkg.txt
 
-$EDITOR $pkgtxt
+update() {
+    pkgtxt_sorted=$(mktemp)
+    sort /etc/pkg.txt > $pkgtxt_sorted
 
-pkgtxt_sorted=$(mktemp)
-sort /etc/pkg.txt > $pkgtxt_sorted
+    to_install=$(mktemp)
+    to_remove=$(mktemp)
+    pacqeq=$(mktemp)
+    pacman -Qeq > $pacqeq
 
-to_install=$(mktemp)
-to_remove=$(mktemp)
-pacqeq=$(mktemp)
-pacman -Qeq > $pacqeq
+    diff $pkgtxt_sorted $pacqeq | grep "^< " | awk '{print $2}' > $to_install
+    diff $pkgtxt_sorted $pacqeq | grep "^> " | awk '{print $2}' > $to_remove
 
-diff $pkgtxt_sorted $pacqeq | grep "^< " | awk '{print $2}' > $to_install
-diff $pkgtxt_sorted $pacqeq | grep "^> " | awk '{print $2}' > $to_remove
+    # early exit if there's nothing to do
+    if [ ! -s $to_install ] && [ ! -s $to_remove ]; then
+        echo "All good!"
+        remove_tmps
+        exit 0
+    fi
 
-# early exit if there's nothing to do
-if [ ! -s $to_install ] && [ ! -s $to_remove ]; then
-    echo "All good!"
+    echo "Packages to install:"
+    cat $to_install
+
+    echo "Packages to remove:"
+    cat $to_remove
+
+    echo "Proceed? [y/n]"
+    while true; do
+        read yn
+        case $yn in
+            [Yy]* ) break ;;
+            [Nn]* ) exit ;;
+            * ) echo "Please answer y or n." ;;
+        esac
+    done
+
+    # installing all missing packages
+    pacman -S --noconfirm $(cat $to_install) 1>/dev/null 2>/dev/null
+
+    # removing all packages to remove
+    pacman -Rs --noconfirm $(cat $to_remove) 1>/dev/null 2>/dev/null
+
     remove_tmps
-    exit 0
+
+    echo "All good!"
+}
+
+err_usage() {
+    echo "Usage: pkgtxt [ update | edit | sync ] "
+    exit 1
+}
+
+if [ $# -eq 0 ]; then
+    err_usage
+    exit 1
 fi
 
-echo "Packages to install:"
-cat $to_install
-
-echo "Packages to remove:"
-cat $to_remove
-
-echo "Proceed? [y/n]"
-while true; do
-    read yn
-    case $yn in
-        [Yy]* ) break ;;
-        [Nn]* ) exit ;;
-        * ) echo "Please answer y or n." ;;
-    esac
-done
-
-
-# installing all missing packages
-pacman -S --noconfirm $(cat $to_install) 1>/dev/null 2>/dev/null
-
-# removing all packages to remove
-pacman -Rs --noconfirm $(cat $to_remove) 1>/dev/null 2>/dev/null
-
-remove_tmps
-
-echo "All good!"
+case "$1" in
+    update) update ;;
+    edit) $EDITOR $pkgtxt ;;
+    sync) pacman -Qeq > $pkgtxt ;;
+    *) echo "Invalid action -- $1"
+       exit 1
+       ;;
+esac
