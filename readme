@@ -1,0 +1,19 @@
+pkgtxt - manage installed packages with a file
+
+pkgtxt brings the file based package management of Alpine Linux' apk to other
+package managers (the only currently supported package manager is pacman).
+
+To add new packages, add them to the /etc/pkg.txt file.
+To remove packages, simply delete them from the /etc/pkgs.txt file.
+
+# Installation
+To install pkgtxt, run the ./install script as root. It will
+create the /etc/pkg.txt file.
+
+# To be implemented
+Pacman installation hooks which add packages to /etc/pkg.txt.
+Safeguards against removing system-critical packages.
+
+# Contributing
+Patches are welcome! It would be great to add support for package managers other
+than pacman.
