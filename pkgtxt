@@ -26,7 +26,7 @@ update() {
     to_install=$(mktemp)
     to_remove=$(mktemp)
     pacqeq=$(mktemp)
-    pacman -Qeq > $pacqeq
+    pacman -Qeq | sort > $pacqeq
 
     diff $pkgtxt_sorted $pacqeq | grep "^< " | awk '{print $2}' > $to_install
     diff $pkgtxt_sorted $pacqeq | grep "^> " | awk '{print $2}' > $to_remove
