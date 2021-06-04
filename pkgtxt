@@ -41,7 +41,9 @@ update() {
         read yn
         case $yn in
             [Yy]* ) break ;;
-            [Nn]* ) exit ;;
+            [Nn]* ) remove_tmps
+                    exit
+                    ;;
             * ) echo "Please answer y or n." ;;
         esac
     done
